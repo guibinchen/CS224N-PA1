@@ -33,25 +33,31 @@ public class Model1WordAligner implements WordAligner {
       CounterMap<String, String> sourceTargetCounts = new CounterMap<>();
 
       // E-step: update counts based on probabilities
+      // for k = 1..n
+      // Note: Not using index explicitly as List may not have random access.
       for (SentencePair pair : trainingData) {
-        List<String> targetWords = pair.getTargetWords();
+        // source is "French"
         List<String> sourceWords = pair.getSourceWords();
+        // target is "English"
+        List<String> targetWords = pair.getTargetWords();
 
-        for (String target : targetWords) {
-          // Cache $$sum_{j=1}^{l_k} t(f_i^{(k)}|e_j^{(k)})$$
+        // for i = 1..m_k
+        for (String source : sourceWords) {
+          // Cache $$sum_{j=0}^{l_k} t(f_i^{(k)}|e_j^{(k)})$$
           double sumT = 0.0;
-          for (String source : sourceWords) {
-            sumT += t.getCount(source, target);
+          for (String target : targetWords) {
+            sumT += t.getCount(target, source);
           }
-          sumT += t.getCount(NULL, target);
+          sumT += t.getCount(NULL, source);
 
-          for (String source : sourceWords) {
+          // for j = 1..l_k
+          for (String target : targetWords) {
             // Increment probability count
-            double deltaKIJ = t.getCount(source, target) / sumT;
-            sourceTargetCounts.incrementCount(source, target, deltaKIJ);
+            double deltaKIJ = t.getCount(target, source) / sumT;
+            sourceTargetCounts.incrementCount(target, source, deltaKIJ);
           }
-          double deltaKIJ = t.getCount(NULL, target) / sumT;
-          sourceTargetCounts.incrementCount(NULL, target, deltaKIJ);
+          double deltaKIJ = t.getCount(NULL, source) / sumT;
+          sourceTargetCounts.incrementCount(NULL, source, deltaKIJ);
         }
       }
 
