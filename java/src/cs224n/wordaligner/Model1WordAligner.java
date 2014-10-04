@@ -30,23 +30,25 @@ public class Model1WordAligner implements WordAligner {
     int numTargetWords = targetWords.size();
 
     // Find best alignment for each source word
-    // In Model 1, q(j|i,l,m) is a constant, so only need to consider t(f|e).
-    for (int srcIndex = 0; srcIndex < numSourceWords; srcIndex++) {
-      String sourceWord = sourceWords.get(srcIndex);
-      double bestScore = t.getCount(NULL, sourceWord);
+    // In Model 1, q(j|i,l,m) is a constant, so only need to consider t(e|f).
+    for (int tgtIndex = 0; tgtIndex < numTargetWords; tgtIndex++) {
+      String target = targetWords.get(tgtIndex);
+      // Match with NULL.
+      double bestScore = t.getCount(NULL, target);
       int bestIndex = numSourceWords;
 
-      // Iterate over all possible target words and find best
-      for (int tgtIndex = 0; tgtIndex < numTargetWords; tgtIndex++) {
-        String targetWord = targetWords.get(tgtIndex);
-        double score = t.getCount(targetWord, sourceWord);
+      // Match with source text.
+      for (int srcIndex = 0; srcIndex < numSourceWords; srcIndex++) {
+        String source = sourceWords.get(srcIndex);
+        double score = t.getCount(source, target);
+
         if (score > bestScore) {
           bestScore = score;
-          bestIndex = tgtIndex;
+          bestIndex = srcIndex;
         }
       }
 
-      alignment.addPredictedAlignment(bestIndex, srcIndex);
+      alignment.addPredictedAlignment(tgtIndex, bestIndex);
     }
 
     return alignment;
@@ -75,22 +77,22 @@ public class Model1WordAligner implements WordAligner {
         List<String> targetWords = pair.getTargetWords();
 
         // for i = 1..m_k
-        for (String source : sourceWords) {
-          // Cache $$sum_{j=0}^{l_k} t(f_i^{(k)}|e_j^{(k)})$$
+        for (String target : targetWords) {
+          // Cache $$sum_{j=0}^{l_k} t(e_i^{(k)}|f_j^{(k)})$$
           double sumT = 0.0;
-          for (String target : targetWords) {
-            sumT += i == 0 ? initProb : t.getCount(target, source);
+          for (String source : sourceWords) {
+            sumT += i == 0 ? initProb : t.getCount(source, target);
           }
-          sumT += i == 0 ? initProb : t.getCount(NULL, source);
+          sumT += i == 0 ? initProb : t.getCount(NULL, target);
 
           // for j = 1..l_k
-          for (String target : targetWords) {
+          for (String source : sourceWords) {
             // Increment probability count
-            double deltaKIJ = (i == 0 ? initProb : t.getCount(target, source)) / sumT;
-            sourceTargetCounts.incrementCount(target, source, deltaKIJ);
+            double deltaKIJ = (i == 0 ? initProb : t.getCount(source, target)) / sumT;
+            sourceTargetCounts.incrementCount(source, target, deltaKIJ);
           }
-          double deltaKIJ = (i == 0 ? initProb : t.getCount(NULL, source)) / sumT;
-          sourceTargetCounts.incrementCount(NULL, source, deltaKIJ);
+          double deltaKIJ = (i == 0 ? initProb : t.getCount(NULL, target)) / sumT;
+          sourceTargetCounts.incrementCount(NULL, target, deltaKIJ);
         }
       }
 
@@ -140,14 +142,14 @@ public class Model1WordAligner implements WordAligner {
    * @return
    */
   private double getInitialProbability(List<SentencePair> trainingData) {
-    // Gather all source words
-    Set<String> sourceWordSet = new HashSet<>();
+    // Gather all target words
+    Set<String> targetWordSet = new HashSet<>();
 
     for (SentencePair pair : trainingData) {
-      List<String> sourceWords = pair.getSourceWords();
-      sourceWordSet.addAll(sourceWords);
+      List<String> targetWords = pair.getTargetWords();
+      targetWordSet.addAll(targetWords);
     }
 
-    return 1.0 / sourceWordSet.size();
+    return 1.0 / targetWordSet.size();
   }
 }
