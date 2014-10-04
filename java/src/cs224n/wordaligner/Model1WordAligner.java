@@ -4,7 +4,9 @@ import cs224n.util.Counter;
 import cs224n.util.CounterMap;
 import cs224n.util.Counters;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Word aligner using IBM Model 1.
@@ -25,7 +27,9 @@ public class Model1WordAligner implements WordAligner {
 
   @Override
   public void train(List<SentencePair> trainingData) {
-    CounterMap<String, String> t = getInitialProbabilities(trainingData);
+    CounterMap<String, String> t = null;
+    // Use in the first iteration to save space
+    double initProb = getInitialProbability(trainingData);
 
     // Run EM algorithm
     for (int i = 0; i < T; i++) {
@@ -46,17 +50,17 @@ public class Model1WordAligner implements WordAligner {
           // Cache $$sum_{j=0}^{l_k} t(f_i^{(k)}|e_j^{(k)})$$
           double sumT = 0.0;
           for (String target : targetWords) {
-            sumT += t.getCount(target, source);
+            sumT += i == 0 ? initProb : t.getCount(target, source);
           }
-          sumT += t.getCount(NULL, source);
+          sumT += i == 0 ? initProb : t.getCount(NULL, source);
 
           // for j = 1..l_k
           for (String target : targetWords) {
             // Increment probability count
-            double deltaKIJ = t.getCount(target, source) / sumT;
+            double deltaKIJ = (i == 0 ? initProb : t.getCount(target, source)) / sumT;
             sourceTargetCounts.incrementCount(target, source, deltaKIJ);
           }
-          double deltaKIJ = t.getCount(NULL, source) / sumT;
+          double deltaKIJ = (i == 0 ? initProb : t.getCount(NULL, source)) / sumT;
           sourceTargetCounts.incrementCount(NULL, source, deltaKIJ);
         }
       }
@@ -64,7 +68,7 @@ public class Model1WordAligner implements WordAligner {
       // M-step: update probabilities based on updated counts
       CounterMap<String, String> tPrime = Counters.conditionalNormalize(sourceTargetCounts);
 
-      if (hasConverged(t, tPrime)) break;
+      if (i > 0 && hasConverged(t, tPrime)) break;
 
       t = tPrime;
     }
@@ -98,27 +102,19 @@ public class Model1WordAligner implements WordAligner {
   }
 
   /**
-   * Returns initial uniform probabilities.
+   * Returns initial uniform probability.
    * @param trainingData
    * @return
    */
-  private CounterMap<String, String> getInitialProbabilities(List<SentencePair> trainingData) {
-    // Initialize counts
-    CounterMap<String, String> sourceTargetCounts = new CounterMap<>();
-    for (SentencePair pair : trainingData) {
-      List<String> targetWords = pair.getTargetWords();
-      List<String> sourceWords = pair.getSourceWords();
+  private double getInitialProbability(List<SentencePair> trainingData) {
+    // Gather all source words
+    Set<String> sourceWordSet = new HashSet<>();
 
-      for (String target : targetWords) {
-        for (String source : sourceWords) {
-          // Set count to 1 to get uniform probability after normalization
-          sourceTargetCounts.setCount(source, target, 1.0);
-        }
-        sourceTargetCounts.setCount(NULL, target, 1.0);
-      }
+    for (SentencePair pair : trainingData) {
+      List<String> sourceWords = pair.getSourceWords();
+      sourceWordSet.addAll(sourceWords);
     }
 
-    // Normalize to get initial uniform probability for t(f|e)
-    return Counters.conditionalNormalize(sourceTargetCounts);
+    return 1.0 / sourceWordSet.size();
   }
 }
