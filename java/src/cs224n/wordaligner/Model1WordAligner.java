@@ -17,12 +17,39 @@ public class Model1WordAligner implements WordAligner {
   private static final String NULL = "";
   private static final double EPSILON = 1e-4;
   // TODO: determine a proper value
-  private static final int T = 10;
+  private static final int T = 100;
   private CounterMap<String, String> t;
 
   @Override
   public Alignment align(SentencePair sentencePair) {
-    return null;
+    Alignment alignment = new Alignment();
+
+    List<String> sourceWords = sentencePair.getSourceWords();
+    List<String> targetWords = sentencePair.getTargetWords();
+    int numSourceWords = sourceWords.size();
+    int numTargetWords = targetWords.size();
+
+    // Find best alignment for each source word
+    // In Model 1, q(j|i,l,m) is a constant, so only need to consider t(f|e).
+    for (int srcIndex = 0; srcIndex < numSourceWords; srcIndex++) {
+      String sourceWord = sourceWords.get(srcIndex);
+      double bestScore = t.getCount(NULL, sourceWord);
+      int bestIndex = numSourceWords;
+
+      // Iterate over all possible target words and find best
+      for (int tgtIndex = 0; tgtIndex < numTargetWords; tgtIndex++) {
+        String targetWord = targetWords.get(tgtIndex);
+        double score = t.getCount(targetWord, sourceWord);
+        if (score > bestScore) {
+          bestScore = score;
+          bestIndex = tgtIndex;
+        }
+      }
+
+      alignment.addPredictedAlignment(bestIndex, srcIndex);
+    }
+
+    return alignment;
   }
 
   @Override
@@ -33,6 +60,8 @@ public class Model1WordAligner implements WordAligner {
 
     // Run EM algorithm
     for (int i = 0; i < T; i++) {
+      System.out.println("Iteration " + i);
+
       // Set initial counts to 0 (implicitly)
       CounterMap<String, String> sourceTargetCounts = new CounterMap<>();
 
@@ -68,7 +97,11 @@ public class Model1WordAligner implements WordAligner {
       // M-step: update probabilities based on updated counts
       CounterMap<String, String> tPrime = Counters.conditionalNormalize(sourceTargetCounts);
 
-      if (i > 0 && hasConverged(t, tPrime)) break;
+      // Check convergence every 5 iterations
+      if ((i + 1) % 5 == 0 && hasConverged(t, tPrime)) {
+        System.out.println("Converged at iteration " + i);
+        break;
+      }
 
       t = tPrime;
     }
