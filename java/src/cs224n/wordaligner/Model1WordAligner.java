@@ -22,7 +22,34 @@ public class Model1WordAligner implements WordAligner {
 
   @Override
   public Alignment align(SentencePair sentencePair) {
-    return null;
+    Alignment alignment = new Alignment();
+
+    List<String> sourceWords = sentencePair.getSourceWords();
+    List<String> targetWords = sentencePair.getTargetWords();
+    int numSourceWords = sourceWords.size();
+    int numTargetWords = targetWords.size();
+
+    // Find best alignment for each source word
+    // In Model 1, q(j|i,l,m) is a constant, so only need to consider t(f|e).
+    for (int srcIndex = 0; srcIndex < numSourceWords; srcIndex++) {
+      String sourceWord = sourceWords.get(srcIndex);
+      double bestScore = t.getCount(NULL, sourceWord);
+      int bestIndex = numSourceWords;
+
+      // Iterate over all possible target words and find best
+      for (int tgtIndex = 0; tgtIndex < numTargetWords; tgtIndex++) {
+        String targetWord = targetWords.get(tgtIndex);
+        double score = t.getCount(targetWord, sourceWord);
+        if (score > bestScore) {
+          bestScore = score;
+          bestIndex = tgtIndex;
+        }
+      }
+
+      alignment.addPredictedAlignment(bestIndex, srcIndex);
+    }
+
+    return alignment;
   }
 
   @Override
