@@ -17,7 +17,7 @@ public class Model1WordAligner implements WordAligner {
   private static final String NULL = "";
   private static final double EPSILON = 1e-4;
   // TODO: determine a proper value
-  private static final int T = 10;
+  private static final int T = 100;
   private CounterMap<String, String> t;
 
   @Override
@@ -60,6 +60,8 @@ public class Model1WordAligner implements WordAligner {
 
     // Run EM algorithm
     for (int i = 0; i < T; i++) {
+      System.out.println("Iteration " + i);
+
       // Set initial counts to 0 (implicitly)
       CounterMap<String, String> sourceTargetCounts = new CounterMap<>();
 
@@ -95,7 +97,11 @@ public class Model1WordAligner implements WordAligner {
       // M-step: update probabilities based on updated counts
       CounterMap<String, String> tPrime = Counters.conditionalNormalize(sourceTargetCounts);
 
-      if (i > 0 && hasConverged(t, tPrime)) break;
+      // Check convergence every 5 iterations
+      if ((i + 1) % 5 == 0 && hasConverged(t, tPrime)) {
+        System.out.println("Converged at iteration " + i);
+        break;
+      }
 
       t = tPrime;
     }
