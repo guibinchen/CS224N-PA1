@@ -19,6 +19,14 @@ public class Model1WordAligner implements WordAligner {
   private static final int T = 100;
   private CounterMap<String, String> t;
 
+  /**
+   * Get T(f|e) which model 2 will use it to do initialization.
+   * @return t
+   */
+  public CounterMap<String, String> getT() {
+    return t;
+  }
+
   @Override
   public Alignment align(SentencePair sentencePair) {
     Alignment alignment = new Alignment();
