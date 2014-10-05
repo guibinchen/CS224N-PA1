@@ -12,9 +12,6 @@ public class PMIModel implements WordAligner {
 
   private static final long serialVersionUID = 1315751943476440515L;
 
-  // NULL in source language.
-  private static final String NULL = "";
-
   // From the training data.
   private Counter<String> sourceCounts;
   private Counter<String> targetCounts;
@@ -31,7 +28,7 @@ public class PMIModel implements WordAligner {
     for (int tgtIndex = 0; tgtIndex < numTargetWords; tgtIndex++) {
       String tgt = targetWords.get(tgtIndex);
       // Match with NULL.
-      double bestScore = calculateScore(NULL, tgt);
+      double bestScore = calculateScore(NULL_WORD, tgt);
       int bestIndex = numSourceWords;
       // Match with source text.
       for (int srcIndex = 0; srcIndex < numSourceWords; srcIndex++) {
@@ -60,14 +57,14 @@ public class PMIModel implements WordAligner {
         for(String source : sourceWords){
           sourceTargetCounts.incrementCount(source, target, 1.0);
         }
-        sourceTargetCounts.incrementCount(NULL, target, 1.0);
+        sourceTargetCounts.incrementCount(NULL_WORD, target, 1.0);
       }
 
       // Count the occurrences of e_i.
       for (String source : sourceWords) {
         sourceCounts.incrementCount(source, 1.0);
       }
-      sourceCounts.incrementCount(NULL, 1.0);
+      sourceCounts.incrementCount(NULL_WORD, 1.0);
 
       // Count the occurrences of f_j.
       for (String target : targetWords) {

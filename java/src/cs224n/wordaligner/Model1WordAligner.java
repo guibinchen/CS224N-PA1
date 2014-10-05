@@ -14,7 +14,6 @@ import java.util.Set;
 public class Model1WordAligner implements WordAligner {
   // NULL in source language.
   // TODO: extract to abstract class
-  private static final String NULL = "";
   private static final double EPSILON = 1e-4;
   // TODO: determine a proper value
   private static final int T = 100;
@@ -33,8 +32,8 @@ public class Model1WordAligner implements WordAligner {
     // In Model 1, q(j|i,l,m) is a constant, so only need to consider t(e|f).
     for (int tgtIndex = 0; tgtIndex < numTargetWords; tgtIndex++) {
       String target = targetWords.get(tgtIndex);
-      // Match with NULL.
-      double bestScore = t.getCount(NULL, target);
+      // Match with NULL_WORD.
+      double bestScore = t.getCount(NULL_WORD, target);
       int bestIndex = numSourceWords;
 
       // Match with source text.
@@ -83,7 +82,7 @@ public class Model1WordAligner implements WordAligner {
           for (String source : sourceWords) {
             sumT += i == 0 ? initProb : t.getCount(source, target);
           }
-          sumT += i == 0 ? initProb : t.getCount(NULL, target);
+          sumT += i == 0 ? initProb : t.getCount(NULL_WORD, target);
 
           // for j = 1..l_k
           for (String source : sourceWords) {
@@ -91,8 +90,8 @@ public class Model1WordAligner implements WordAligner {
             double deltaKIJ = (i == 0 ? initProb : t.getCount(source, target)) / sumT;
             sourceTargetCounts.incrementCount(source, target, deltaKIJ);
           }
-          double deltaKIJ = (i == 0 ? initProb : t.getCount(NULL, target)) / sumT;
-          sourceTargetCounts.incrementCount(NULL, target, deltaKIJ);
+          double deltaKIJ = (i == 0 ? initProb : t.getCount(NULL_WORD, target)) / sumT;
+          sourceTargetCounts.incrementCount(NULL_WORD, target, deltaKIJ);
         }
       }
 
