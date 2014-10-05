@@ -14,7 +14,7 @@ import java.util.Set;
 public class Model2WordAligner implements WordAligner {
 
   // Maximum number of iterations.
-  private static final int T = 100;
+  private static final int T = 50;
   private static final double EPSILON = 1e-4;
 
   // <Source, Target> => Count.
@@ -65,6 +65,8 @@ public class Model2WordAligner implements WordAligner {
 
     // Maximum T iterations.
     for (int iter = 0; iter < T; iter++) {
+      System.out.println("Iteration# " + iter);
+
       CounterMap<String, String> sourceTargetCounts = new CounterMap<>();
       CounterMap<String, Integer> alignmentCounts = new CounterMap<>();
 
@@ -79,21 +81,19 @@ public class Model2WordAligner implements WordAligner {
         for (int i = 0; i < numTargetWords; i++) {
           double sumQT = 0;
           String target = targetWords.get(i);
+          String index = i + suffix;
 
           for (int j = 0; j <= numSourceWords; j++) {
             String source = j == numSourceWords ? NULL_WORD : sourceWords.get(j);
-            String index = i + suffix;
             sumQT += q.getCount(index, j) * t.getCount(source, target);
           }
 
           for (int j = 0; j <= numSourceWords; j++) {
             String source = j == numSourceWords ? NULL_WORD : sourceWords.get(j);
-            String index = i + suffix;
 
-            double deltaKIJ = alignmentCounts.getCount(index, j) *
-                sourceTargetCounts.getCount(source, target) / sumQT;
+            double deltaKIJ = q.getCount(index, j) * t.getCount(source, target) / sumQT;
 
-            sourceTargetCounts.incrementCount(target, source, deltaKIJ);
+            sourceTargetCounts.incrementCount(source, target, deltaKIJ);
             alignmentCounts.incrementCount(index, j, deltaKIJ);
           }
         }
@@ -147,7 +147,7 @@ public class Model2WordAligner implements WordAligner {
       int n = pair.getTargetWords().size();
       for (int i = 0; i < n; i++) { // Target.
         for (int j = 0; j <= m; j++) { // Source.
-          q.setCount(i + "," + n + "," + m, j, i + Math.random());
+          q.setCount(i + "," + n + "," + m, j, Math.random());
         }
       }
     }
