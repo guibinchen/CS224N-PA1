@@ -97,28 +97,28 @@ public class Model2WordAligner implements WordAligner {
             alignmentCounts.incrementCount(index, j, deltaKIJ);
           }
         }
-
-        CounterMap<String, String> tPrime = Counters.conditionalNormalize(sourceTargetCounts);
-        CounterMap<String, Integer> qPrime = Counters.conditionalNormalize(alignmentCounts);
-
-        if ((iter + 1) % 5 == 0 && hasConverged(t, tPrime)) {
-          System.out.println("Converged at iteration: " + iter);
-          break;
-        }
-
-        t = tPrime;
-        q = qPrime;
       }
+
+      CounterMap<String, String> tPrime = Counters.conditionalNormalize(sourceTargetCounts);
+      CounterMap<String, Integer> qPrime = Counters.conditionalNormalize(alignmentCounts);
+
+      if ((iter + 1) % 5 == 0 && hasConverged(t, tPrime) && hasConverged(q, qPrime)) {
+        System.out.println("Converged at iteration: " + iter);
+        break;
+      }
+
+      t = tPrime;
+      q = qPrime;
     }
   }
 
-  // Judge if EM has converged.
-  private static boolean hasConverged(CounterMap<String, String> t, CounterMap<String, String> tPrime) {
-    for (String source : t.keySet()) {
-      Counter<String> probs = t.getCounter(source);
-      Counter<String> probsPrime = tPrime.getCounter(source);
+  // Judge if two CounterMap doesn't change during last iteration.
+  private static <A, B> boolean hasConverged(CounterMap<A, B> t, CounterMap<A, B> tPrime) {
+    for (A source : t.keySet()) {
+      Counter<B> probs = t.getCounter(source);
+      Counter<B> probsPrime = tPrime.getCounter(source);
 
-      for (String target : probs.keySet()) {
+      for (B target : probs.keySet()) {
         double prob = probs.getCount(target);
         double probPrime = probsPrime.getCount(target);
 
@@ -147,12 +147,12 @@ public class Model2WordAligner implements WordAligner {
       int n = pair.getTargetWords().size();
       for (int i = 0; i < n; i++) { // Target.
         for (int j = 0; j <= m; j++) { // Source.
-          q.setCount(i + "," + n + "," + m, j, Math.random());
+          q.setCount(i + "," + m + "," + n, j, Math.random());
         }
       }
     }
 
     // Normalize q.
-    Counters.conditionalNormalize(q);
+    q = Counters.conditionalNormalize(q);
   }
 }
