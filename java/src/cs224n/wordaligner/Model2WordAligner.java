@@ -139,6 +139,7 @@ public class Model2WordAligner implements WordAligner {
     Model1WordAligner model1 = new Model1WordAligner();
     model1.train(trainingData);
     t = model1.getT();
+    q = new CounterMap<>();
 
     // Randomly initialize q.
     for (SentencePair pair : trainingData) {

@@ -16,7 +16,7 @@ public class Model1WordAligner implements WordAligner {
   // TODO: extract to abstract class
   private static final double EPSILON = 1e-4;
   // TODO: determine a proper value
-  private static final int T = 100;
+  private static final int T = 50;
   private CounterMap<String, String> t;
 
   /**
