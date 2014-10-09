@@ -12,7 +12,9 @@ import edu.stanford.nlp.util.Generics;
  * A rule featurizer.
  */
 public class MyFeaturizer implements RuleFeaturizer<IString, String> {
-  
+
+  private static final String FEATURE_NAME = "TGTD";
+
   @Override
   public void initialize() {
     // Do any setup here.
@@ -22,10 +24,38 @@ public class MyFeaturizer implements RuleFeaturizer<IString, String> {
   public List<FeatureValue<String>> ruleFeaturize(
       Featurizable<IString, String> f) {
 
-    // TODO: Return a list of features for the rule. Replace these lines
-    // with your own feature.
     List<FeatureValue<String>> features = Generics.newLinkedList();
-    features.add(new FeatureValue<String>("MyFeature", 1.0));
+
+    // Count the number of 'of'.
+    /*
+    int cnt = 0;
+    for (IString istring : f.targetPhrase) {
+      if (istring.toString().equals("of")) {
+        cnt++;
+      }
+    }
+    features.add(new FeatureValue<String>(
+        String.format("%s:%d",FEATURE_NAME, cnt), 1.0));
+        */
+
+    // Number of "number".
+    int pos_cnt = 0;
+    for (IString istring : f.targetPhrase) {
+      if (istring.toString().matches(".*\\d+.*")) {
+        pos_cnt++;
+      }
+    }
+    int neg_cnt = 0;
+    for (IString istring: f.sourcePhrase) {
+      if (istring.toString().matches(".*\\d+.*")) {
+        neg_cnt++;
+      }
+    }
+    int cnt = pos_cnt - neg_cnt;
+
+    features.add(new FeatureValue<String>(
+        String.format("%s:%d",FEATURE_NAME, cnt), 1.0));
+
     return features;
   }
 
