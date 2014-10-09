@@ -27,12 +27,25 @@ public class MyFeaturizer implements RuleFeaturizer<IString, String> {
     List<FeatureValue<String>> features = Generics.newLinkedList();
 
     // Count the number of 'of'.
+    /*
     int cnt = 0;
     for (IString istring : f.targetPhrase) {
       if (istring.toString().equals("of")) {
         cnt++;
       }
     }
+    features.add(new FeatureValue<String>(
+        String.format("%s:%d",FEATURE_NAME, cnt), 1.0));
+        */
+
+    // Number of "number".
+    int cnt = 0;
+    for (IString istring : f.targetPhrase) {
+      if (istring.toString().matches("\\d")) {
+        cnt++;
+      }
+    }
+
     features.add(new FeatureValue<String>(
         String.format("%s:%d",FEATURE_NAME, cnt), 1.0));
 
